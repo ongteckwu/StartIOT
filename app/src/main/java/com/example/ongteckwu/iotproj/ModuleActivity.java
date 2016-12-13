@@ -61,6 +61,8 @@ public class ModuleActivity extends AppCompatActivity {
     private ImageButton logoutButton;
     private ImageButton settingsButton;
 
+    private Server server;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -294,7 +296,9 @@ public class ModuleActivity extends AppCompatActivity {
                 if(mServerName.equals(s.getName()) && mPassword.equals(s.getPassword())) {
                     DatabaseReference myRef = firebaseDatabase.getReference("User");
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                    myRef.setValue(user.getProviderId(), s.getName());
+                    myRef.child(user.getUid()).setValue(s.getName());
+                    // save server
+                    server = s;
                     return true;
                 }
             }
