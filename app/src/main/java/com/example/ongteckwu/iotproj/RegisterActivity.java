@@ -6,9 +6,11 @@ import android.annotation.TargetApi;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -16,16 +18,29 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.ongteckwu.iotproj.components.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private UserRegisterTask mAuthTask = null;
+//    private UserRegisterTask mAuthTask = null;
 
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private EditText mRepasswordView;
     private View mProgressView;
+
+    // Firebase
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +81,8 @@ public class RegisterActivity extends AppCompatActivity {
         });
 
         mProgressView = findViewById(R.id.register_progress);
+
+        mAuth = FirebaseAuth.getInstance();
     }
 
     /**
@@ -74,9 +91,9 @@ public class RegisterActivity extends AppCompatActivity {
      * errors are presented and no actual login attempt is made.
      */
     private void attemptRegister() {
-        if (mAuthTask != null) {
-            return;
-        }
+//        if (mAuthTask != null) {
+//            return;
+//        }
 
         // Reset errors.
         mEmailView.setError(null);
@@ -124,8 +141,29 @@ public class RegisterActivity extends AppCompatActivity {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserRegisterTask(email, password);
-            mAuthTask.execute((Void) null);
+            mAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            Log.d("REGISTER", "createUserWithEmail:onComplete:" + task.isSuccessful());
+                            if (task.isSuccessful()) {
+                                Intent newIntent = new Intent(getApplicationContext(), ModuleActivity.class);
+                                startActivity(newIntent);
+                            }
+                            // If sign in fails, display a message to the user. If sign in succeeds
+                            // the auth state listener will be notified and logic to handle the
+                            // signed in user can be handled in the listener.
+                            else {
+                                showProgress(false);
+                                Toast toast = Toast.makeText(getApplicationContext(), "Registration unsuccessful. Try Again.", Toast.LENGTH_SHORT);
+                                toast.show();
+                            }
+
+                            // ...
+                        }
+                    });
+//            mAuthTask = new UserRegisterTask(email, password);
+//            mAuthTask.execute((Void) null);
         }
     }
 
@@ -136,7 +174,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private boolean isPasswordValid(String password) {
         //TODO: Replace this with your own logic
-        return password.length() > 4;
+        return password.length() > 5;
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
@@ -166,51 +204,52 @@ public class RegisterActivity extends AppCompatActivity {
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    public class UserRegisterTask extends AsyncTask<Void, Void, Boolean> {
-
-        private final String mEmail;
-        private final String mPassword;
-
-        UserRegisterTask(String email, String password) {
-            mEmail = email;
-            mPassword = password;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-
-            try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                return false;
-            }
-
-            // TODO: register the new account here.
-            // return the firebase account
-            return true;
-        }
-
-        @Override
-        // change this to
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (success) {
-                Intent newIntent = new Intent(getApplicationContext(), ModuleActivity.class);
-                startActivity(newIntent);
-            } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
-        }
-    }
+//    public class UserRegisterTask extends AsyncTask<Void, Void, Boolean> {
+//
+//        private final String mEmail;
+//        private final String mPassword;
+//
+//        UserRegisterTask(String email, String password) {
+//            mEmail = email;
+//            mPassword = password;
+//        }
+//
+//        @Override
+//        protected Boolean doInBackground(Void... params) {
+//            // TODO: attempt authentication against a network service.)
+//            try {
+//                FirebaseDatabase database = FirebaseDatabase.getInstance();
+//                DatabaseReference myRef = database.getReference("User/" + mEmail);
+//                myRef.setValue(new User(mEmail, mPassword));
+//                return true;
+//            }
+//            catch (Exception e) {
+//                e.printStackTrace();
+//                // Probably a connection error
+//                return false;
+//            }
+//        }
+//
+//        @Override
+//        // change this to
+//        protected void onPostExecute(final Boolean success) {
+//            mAuthTask = null;
+//            showProgress(false);
+//
+//            if (success) {
+//                Intent newIntent = new Intent(getApplicationContext(), ModuleActivity.class);
+//                startActivity(newIntent);
+//            } else {
+//                Toast toast;
+//                toast = Toast.makeText(getApplicationContext(), "Something wrong happened. Try again.", Toast.LENGTH_SHORT);
+//                toast.show();
+//            }
+//        }
+//
+//        @Override
+//        protected void onCancelled() {
+//            mAuthTask = null;
+//            showProgress(false);
+//        }
+//    }
 }

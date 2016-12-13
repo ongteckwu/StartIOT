@@ -46,7 +46,8 @@
             android:text="@string/connect_server"
             android:id="@+id/connectServerText"
             android:textSize="30sp"
-            android:layout_gravity="center_horizontal" />
+            android:layout_gravity="center_horizontal"
+            android:fontFamily="Vanadine Regular" />
         <android.support.design.widget.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

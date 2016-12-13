@@ -19,4 +19,6 @@
     <string name="register">Register</string>
     <string name="connect_server">Connect to kit server</string>
     <string name="no_module_connect">No modules connected</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="add_module_dialog_title">Add Module</string>
 </resources>

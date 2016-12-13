@@ -7,4 +7,5 @@
     <color name="colorCardText">#AA171717</color>
     <color name="colorCard">#44FFFFFF</color>
     <color name="colorCardSecond">#77FFFFFF</color>
+    <color name="lightWhite">#33FFFFFF</color>
 </resources>

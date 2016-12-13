@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "726825837159",
+    "firebase_url": "https://startiot-9a94d.firebaseio.com",
+    "project_id": "startiot-9a94d",
+    "storage_bucket": "startiot-9a94d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:726825837159:android:bdb58c153da924ce",
+        "android_client_info": {
+          "package_name": "com.example.ongteckwu.iotproj"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "726825837159-h09rh5amddneeaunk838ebbn63d8dp2c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWJ39hj8yAcMbd3b1NGAvDR18mXkipJy4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

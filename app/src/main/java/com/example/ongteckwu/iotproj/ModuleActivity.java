@@ -4,19 +4,32 @@ import android.annotation.TargetApi;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
+import com.example.ongteckwu.iotproj.components.Server;
+import com.example.ongteckwu.iotproj.modules.DataModType;
 import com.example.ongteckwu.iotproj.modules.DataModule;
 import com.example.ongteckwu.iotproj.modules.DoorModule;
+import com.example.ongteckwu.iotproj.modules.ModType;
 import com.example.ongteckwu.iotproj.modules.Module;
 import com.example.ongteckwu.iotproj.modules.ModuleRVAdapter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.zl.reik.dilatingdotsprogressbar.DilatingDotsProgressBar;
 
 import java.util.ArrayList;
@@ -36,6 +49,18 @@ public class ModuleActivity extends AppCompatActivity {
     private EditText mServerNameView;
     private DilatingDotsProgressBar mProgressView;
 
+    // List of servers
+    ArrayList<Server> servers = new ArrayList<Server>();
+
+    // List of modules
+    List<Module> modules = new ArrayList<>();
+
+    private FirebaseAuth mAuth;
+    private FirebaseDatabase firebaseDatabase;
+
+    private ImageButton logoutButton;
+    private ImageButton settingsButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,16 +78,55 @@ public class ModuleActivity extends AppCompatActivity {
         LinearLayoutManager llm = new LinearLayoutManager(getApplicationContext());
         rv.setLayoutManager(llm);
 
-        List<Module> modules = new ArrayList<>();
-        modules.add(new DoorModule("122023", R.drawable.door));
-        modules.add(new DataModule("123231", R.drawable.analytics));
-        modules.add(new DataModule("123231", R.drawable.analytics));
-        ModuleRVAdapter adapter = new ModuleRVAdapter(modules);
+        // Temp modules
+        modules.add(new DoorModule("122023", R.drawable.door, new ModType("Door")));
+        modules.add(new DataModule("123231", R.drawable.analytics, new DataModType.TemperatureModType()));
+        modules.add(new DataModule("123231", R.drawable.analytics, new DataModType.TemperatureModType()));
+
+        ModuleRVAdapter adapter = new ModuleRVAdapter(modules, getApplicationContext());
         rv.setAdapter(adapter);
+
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = firebaseDatabase.getReference("Server");
+        myRef.addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(DataSnapshot snapshot){
+                Log.i("SNAPSHOT", "Snapshot taken");
+                servers = new ArrayList<>();
+                for ( DataSnapshot child : snapshot.getChildren()){
+                    Server s = child.getValue(Server.class);
+                    servers.add(s);
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println(databaseError);
+            }
+        } );
+
+        // Initialize buttons
+        logoutButton = (ImageButton) findViewById(R.id.logoutButton);
+        settingsButton = (ImageButton) findViewById(R.id.settingsButton);
+
+        mAuth = FirebaseAuth.getInstance();
     }
 
     public void onClickConnect(View v) {
+        // if add module is clicked
+        if (appState == AppState.NO_MODULES || appState == AppState.MODULES_CONNECTED) {
+            DialogFragment newFragment = new AddModuleDialog();
+            newFragment.show(getSupportFragmentManager(), "add module");
+            changeToModuleState();
+        }
         goNextState();
+    }
+
+    private void changeToModuleState() {
+        if (modules.isEmpty()) {
+            appState = AppState.NO_MODULES;
+        } else {
+            appState = AppState.MODULES_CONNECTED;
+        }
     }
 
     private void goNextState() {
@@ -71,31 +135,48 @@ public class ModuleActivity extends AppCompatActivity {
                 if (attemptServerLogin()) {
                     View serverLoginView = findViewById(R.id.server_login_form);
                     serverLoginView.setVisibility(View.GONE);
+                    settingsButton.setVisibility(View.INVISIBLE);
+                    logoutButton.setVisibility(View.INVISIBLE);
                     appState = AppState.CONNECT_TO_SERVER;
                 }
                 break;
             }
             case CONNECT_TO_SERVER: {
                 mProgressView.hideNow();
-                View noModView = findViewById(R.id.no_module_text);
                 Button connectButton = (Button) findViewById(R.id.connectButton);
-                noModView.setVisibility(View.VISIBLE);
-                connectButton.setText("SCAN");
-                appState = AppState.NO_MODULES;
+                settingsButton.setVisibility(View.VISIBLE);
+                logoutButton.setVisibility(View.VISIBLE);
+                connectButton.setText("ADD MODULE");
+                // change appState to either NO_MODULES if server has no modules connected,
+                // or MODULES_CONNECTED if server has modules connected
+                changeToModuleState();
+                goNextState();
                 break;
             }
             case NO_MODULES: {
+                View noModView = findViewById(R.id.no_module_text);
+                noModView.setVisibility(View.VISIBLE);
+                break;
+            }
+            case MODULES_CONNECTED: {
                 View noModView = findViewById(R.id.no_module_text);
                 View recycleView = findViewById(R.id.recycle_view_module);
 
                 noModView.setVisibility(View.GONE);
                 recycleView.setVisibility(View.VISIBLE);
-                appState = AppState.MODULES_CONNECTED;
                 break;
             }
-            case MODULES_CONNECTED: {
-                // TODO: Connect more modules logic
-                break;
+        }
+    }
+
+    private void goPreviousState() {
+        switch(appState) {
+            case CONNECT_TO_SERVER: {
+                View serverLoginView = findViewById(R.id.server_login_form);
+                serverLoginView.setVisibility(View.VISIBLE);
+                settingsButton.setVisibility(View.VISIBLE);
+                logoutButton.setVisibility(View.VISIBLE);
+                appState = AppState.ENTER_SERVER_NAME_PW;
             }
         }
     }
@@ -155,14 +236,18 @@ public class ModuleActivity extends AppCompatActivity {
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
         // for very easy animations. If available, use these APIs to fade-in
         // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        if (show) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            mProgressView.showNow();
+                mProgressView.showNow();
+            } else {
+                // The ViewPropertyAnimator APIs are not available, so simply show
+                // and hide the relevant UI components.
+                mProgressView.showNow();
+            }
         } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            mProgressView.showNow();
+            mProgressView.hideNow();
         }
     }
     /**
@@ -170,7 +255,7 @@ public class ModuleActivity extends AppCompatActivity {
      * @param v
      */
     public void onClickLogout(View v) {
-        // TODO: Logout functionality
+        mAuth.signOut();
         Intent loginMenuIntent = new Intent(getApplicationContext(), LoginActivity.class);
         startActivity(loginMenuIntent);
     }
@@ -186,6 +271,7 @@ public class ModuleActivity extends AppCompatActivity {
 
         private final String mServerName;
         private final String mPassword;
+        private Server s;
 
         ServerLoginTask(String serverName, String password) {
             mServerName = serverName;
@@ -194,18 +280,25 @@ public class ModuleActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
 
-            try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                return false;
+//            try {
+//                Thread.sleep(1);
+//            } catch (Exception e) {
+//
+//            }
+            //TODO: login to server
+
+            Log.i("SERVERS", servers.toString());
+            for (int i = 0; i<servers.size(); i++){
+                s = servers.get(i);
+                if(mServerName.equals(s.getName()) && mPassword.equals(s.getPassword())) {
+                    DatabaseReference myRef = firebaseDatabase.getReference("User");
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    myRef.setValue(user.getProviderId(), s.getName());
+                    return true;
+                }
             }
-
-            // TODO: register the new account here.
-            // return the firebase account
-            return true;
+            return false;
         }
 
         @Override
@@ -217,6 +310,7 @@ public class ModuleActivity extends AppCompatActivity {
             if (success) {
                 goNextState();
             } else {
+                goPreviousState();
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
             }

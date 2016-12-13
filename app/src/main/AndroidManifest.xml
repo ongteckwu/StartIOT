@@ -18,7 +18,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".ModuleActivity" />
-        <activity android:name=".RegisterActivity"></activity>
+        <activity android:name=".RegisterActivity" />
+        <activity android:name=".DataModuleActivity" />
+        <activity android:name=".DoorModuleActivity"></activity>
     </application>
 
 </manifest>
