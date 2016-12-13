@@ -35,7 +35,9 @@ public abstract class Module implements Serializable{
         return moduleName;
     }
 
-    public String getModuleNumber() { return "ID: " + moduleNumber; }
+    public String getModuleNumber() { return moduleNumber; }
+
+    public String getModuleNumberWithID() { return "ID: " + moduleNumber; }
 
     public int getImageId() {
         return imageId;

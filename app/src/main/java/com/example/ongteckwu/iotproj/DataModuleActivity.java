@@ -3,6 +3,7 @@ package com.example.ongteckwu.iotproj;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.widget.TextView;
 
 import com.example.ongteckwu.iotproj.modules.DataModule;
@@ -19,11 +20,14 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class DataModuleActivity extends AbstractModuleActivity {
     private TextView titleView;
     private TextView dataView;
     private TextView graphView;
+    private TextView valueView;
+    private ModType modType;
 
 
     @Override
@@ -33,14 +37,14 @@ public class DataModuleActivity extends AbstractModuleActivity {
 
         // get module
         Intent intent = getIntent();
-        Bundle extras = intent.getExtras();
         DataModule module = (DataModule) intent.getSerializableExtra("module");
-        ModType modType = module.getModType();
+        modType = module.getModType();
 
         // initialize inner view
         titleView = (TextView) findViewById(R.id.data_component_moduleTitle);
         dataView = (TextView) findViewById(R.id.data_component_sensorText);
         graphView = (TextView) findViewById(R.id.data_component_graphText);
+        valueView = (TextView) findViewById(R.id.data_component_sensorData);
 
         String sensorText = modType.getName().toUpperCase() + " SENSOR";
         String graphText = modType.getName().toUpperCase() + " AGAINST TIME";
@@ -49,12 +53,15 @@ public class DataModuleActivity extends AbstractModuleActivity {
         dataView.setText(modType.getName().toUpperCase());
         graphView.setText(graphText);
 
+        module.addActivity(this);
+
         LineChart mChart = (LineChart) findViewById(R.id.data_component_chart);
 
         List<Entry> entries = new ArrayList<>();
 
-        for (int i = 0; i < 5; i++) {
-            entries.add(new Entry(i, (i+2)*(i-3)*(i-4)));
+        Random rng = new Random(1337);
+        for (int i = 0; i < 25; i++) {
+            entries.add(new Entry(i, (int) Math.max(50, (50 * (1 + rng.nextGaussian())))));
         }
 
         // enable touch gestures
@@ -105,6 +112,15 @@ public class DataModuleActivity extends AbstractModuleActivity {
         dataSet.setFillColor(R.color.colorPrimary);
         LineData lineData = new LineData(dataSet);
         mChart.setData(lineData);
+    }
 
+    public void updateValue(int value) {
+        String newValue;
+        if (modType.getSymPos() == ModType.SymbolPosition.RIGHT) {
+            newValue = Integer.toString(value) + modType.getSymbol();
+        } else {
+            newValue = modType.getSymbol() + Integer.toString(value);
+        }
+        valueView.setText(newValue);
     }
 }

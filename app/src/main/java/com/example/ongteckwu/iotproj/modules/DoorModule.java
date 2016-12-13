@@ -1,7 +1,11 @@
 package com.example.ongteckwu.iotproj.modules;
 
 import com.example.ongteckwu.iotproj.DoorModuleActivity;
+import com.example.ongteckwu.iotproj.components.Server;
+import com.example.ongteckwu.iotproj.components.ServerSingleton;
 import com.example.ongteckwu.iotproj.utils.BulletTextUtil;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Map;
 
@@ -9,13 +13,9 @@ import java.util.Map;
  * Created by ongteckwu on 30/11/16.
  */
 public class DoorModule extends Module {
-    // renderMap<door_component_<name>, value>
-    public DoorModule(String moduleNumber, int imageId, ModType modType) {
-        super("Door Module", moduleNumber, imageId, modType, DoorModuleActivity.class);
+    public DoorModule(String moduleName, String moduleNumber, int imageId, ModType modType) {
+        super(moduleName, moduleNumber, imageId, modType, DoorModuleActivity.class);
 
-        Map renderMap = getRenderMap();
-        //renderMap.put
-        // values are retrieved here from firebase and passed to the respective layouts
     }
 
     @Override

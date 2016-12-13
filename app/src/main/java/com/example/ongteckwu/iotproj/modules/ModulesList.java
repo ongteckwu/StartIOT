@@ -10,9 +10,7 @@ public class ModulesList {
     public static List<CategoryType> cat = new ArrayList<>();
 
     // data names (with corresponding types)
-    public static List<ModType> A = new ArrayList<>();
-    public static List<ModType> B = new ArrayList<>();
-    public static List<ModType> C = new ArrayList<>();
+    public static List<ModType> data = new ArrayList<>();
 
     public static List<ModType> door = new ArrayList<>();
 
@@ -20,17 +18,14 @@ public class ModulesList {
         cat.add(new CategoryType("Door"));
         cat.add(new CategoryType("Data"));
 
-        A.add(new DataModType.TemperatureModType());
-        A.add(new DataModType.RainModType());
-        A.add(new DataModType.SoilHumidityModType());
-        A.add(new DataModType.InfraRedModType());
-        A.add(new DataModType.UltraSonicModType());
-
-        B.add(new DataModType.HumidityModType());
-        B.add(new DataModType.TemperatureModType());
-
-        C.add(new DataModType.PIRModType());
-
+        data.add(new DataModType.TemperatureModType());
+        data.add(new DataModType.RainModType());
+        data.add(new DataModType.SoilHumidityModType());
+        data.add(new DataModType.InfraRedModType());
+        data.add(new DataModType.UltraSonicModType());
+        data.add(new DataModType.HumidityModType());
+        data.add(new DataModType.TemperatureModType());
+        data.add(new DataModType.PIRModType());
         door.add(new ModType("Door"));
     }
 }

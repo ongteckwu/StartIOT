@@ -14,4 +14,5 @@ public abstract class AbstractModuleActivity extends AppCompatActivity {
     public void onClickSettings(View v) {
         // SETTINGS
     }
+
 }

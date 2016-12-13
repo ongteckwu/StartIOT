@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 
 import com.example.ongteckwu.iotproj.components.Server;
+import com.example.ongteckwu.iotproj.components.ServerSingleton;
 import com.example.ongteckwu.iotproj.modules.DataModType;
 import com.example.ongteckwu.iotproj.modules.DataModule;
 import com.example.ongteckwu.iotproj.modules.DoorModule;
@@ -33,7 +34,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.zl.reik.dilatingdotsprogressbar.DilatingDotsProgressBar;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ModuleActivity extends AppCompatActivity {
 
@@ -48,20 +51,24 @@ public class ModuleActivity extends AppCompatActivity {
     private EditText mPasswordView;
     private EditText mServerNameView;
     private DilatingDotsProgressBar mProgressView;
+    private View serverLoginView;
 
     // List of servers
     ArrayList<Server> servers = new ArrayList<Server>();
+    List<String> serverName = new ArrayList<>();
 
     // List of modules
     List<Module> modules = new ArrayList<>();
 
     private FirebaseAuth mAuth;
     private FirebaseDatabase firebaseDatabase;
+    private FirebaseUser user;
 
     private ImageButton logoutButton;
     private ImageButton settingsButton;
 
     private Server server;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,29 +82,54 @@ public class ModuleActivity extends AppCompatActivity {
         mPasswordView = (EditText) findViewById(R.id.server_password);
         mServerNameView = (EditText) findViewById(R.id.server_name);
         mProgressView = (DilatingDotsProgressBar) findViewById(R.id.progressDots);
+        serverLoginView = findViewById(R.id.server_login_form);
 
         RecyclerView rv = (RecyclerView) findViewById(R.id.recycle_view_module);
         LinearLayoutManager llm = new LinearLayoutManager(getApplicationContext());
         rv.setLayoutManager(llm);
 
         // Temp modules
-        modules.add(new DoorModule("122023", R.drawable.door, new ModType("Door")));
-        modules.add(new DataModule("123231", R.drawable.analytics, new DataModType.TemperatureModType()));
-        modules.add(new DataModule("123231", R.drawable.analytics, new DataModType.TemperatureModType()));
+        modules.add(new DoorModule("My Cool Door", "12222", R.drawable.door, new ModType("Door")));
+        modules.add(new DataModule("Corridor Flame Sensor", "12345", R.drawable.analytics, new DataModType.FlameModType()));
+        modules.add(new DataModule("Living Room Humidity Sensor", "12346", R.drawable.analytics, new DataModType.HumidityModType()));
 
         ModuleRVAdapter adapter = new ModuleRVAdapter(modules, getApplicationContext());
         rv.setAdapter(adapter);
 
+        user = FirebaseAuth.getInstance().getCurrentUser();
+
         firebaseDatabase = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = firebaseDatabase.getReference("Server");
-        myRef.addValueEventListener(new ValueEventListener(){
+
+        DatabaseReference serverRef = firebaseDatabase.getReference("Server");
+        serverRef.addValueEventListener(new ValueEventListener(){
             @Override
             public void onDataChange(DataSnapshot snapshot){
-                Log.i("SNAPSHOT", "Snapshot taken");
                 servers = new ArrayList<>();
                 for ( DataSnapshot child : snapshot.getChildren()){
                     Server s = child.getValue(Server.class);
                     servers.add(s);
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.out.println(databaseError);
+            }
+        } );
+
+        DatabaseReference userRef = firebaseDatabase.getReference("User");
+        userRef.addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(DataSnapshot snapshot){
+
+                serverName = new ArrayList<>();
+                for ( DataSnapshot child : snapshot.getChildren()){
+                    serverName.add((String) child.getValue());
+                }
+                if (!serverName.isEmpty()) {
+                    Server s = new Server(serverName.get(0), "nopassword");
+                    ServerSingleton.getInstance().setServer(s);
+                    Log.i("CHANGE SERVER", s.toString());
+                    skipToModuleState();
                 }
             }
             @Override
@@ -131,11 +163,20 @@ public class ModuleActivity extends AppCompatActivity {
         }
     }
 
+    private void skipToModuleState() {
+        Button connectButton = (Button) findViewById(R.id.connectButton);
+
+        serverLoginView.setVisibility(View.GONE);
+        connectButton.setText("ADD MODULE");
+
+        changeToModuleState();
+        goNextState();
+    }
+
     private void goNextState() {
         switch(appState) {
             case ENTER_SERVER_NAME_PW: {
                 if (attemptServerLogin()) {
-                    View serverLoginView = findViewById(R.id.server_login_form);
                     serverLoginView.setVisibility(View.GONE);
                     settingsButton.setVisibility(View.INVISIBLE);
                     logoutButton.setVisibility(View.INVISIBLE);
@@ -174,7 +215,6 @@ public class ModuleActivity extends AppCompatActivity {
     private void goPreviousState() {
         switch(appState) {
             case CONNECT_TO_SERVER: {
-                View serverLoginView = findViewById(R.id.server_login_form);
                 serverLoginView.setVisibility(View.VISIBLE);
                 settingsButton.setVisibility(View.VISIBLE);
                 logoutButton.setVisibility(View.VISIBLE);
@@ -295,10 +335,10 @@ public class ModuleActivity extends AppCompatActivity {
                 s = servers.get(i);
                 if(mServerName.equals(s.getName()) && mPassword.equals(s.getPassword())) {
                     DatabaseReference myRef = firebaseDatabase.getReference("User");
-                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                     myRef.child(user.getUid()).setValue(s.getName());
                     // save server
                     server = s;
+                    ServerSingleton.getInstance().setServer(s);
                     return true;
                 }
             }

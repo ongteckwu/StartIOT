@@ -123,17 +123,7 @@ public class AddModuleDialog extends DialogFragment implements AdapterView.OnIte
             case R.id.module_type_spinner: {
                 mods = new ArrayList<>();
                 if (selectedItem.equals("A")) {
-                    for (ModType dmt: ModulesList.A) {
-                        mods.add(dmt.getName());
-                    }
-                }
-                else if (selectedItem.equals("B")) {
-                    for (ModType dmt: ModulesList.B) {
-                        mods.add(dmt.getName());
-                    }
-                }
-                else if (selectedItem.equals("C")) {
-                    for (ModType dmt: ModulesList.C) {
+                    for (ModType dmt: ModulesList.data) {
                         mods.add(dmt.getName());
                     }
                 }

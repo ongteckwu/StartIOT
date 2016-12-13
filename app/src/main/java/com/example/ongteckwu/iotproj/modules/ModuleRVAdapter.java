@@ -63,7 +63,7 @@ public class ModuleRVAdapter extends RecyclerView.Adapter<ModuleRVAdapter.Module
     @Override
     public void onBindViewHolder(ModuleViewHolder moduleViewHolder, final int i) {
         moduleViewHolder.moduleName.setText(modules.get(i).getModuleName());
-        moduleViewHolder.moduleNumber.setText(modules.get(i).getModuleNumber());
+        moduleViewHolder.moduleNumber.setText(modules.get(i).getModuleNumberWithID());
         moduleViewHolder.modulePhoto.setImageResource(modules.get(i).getImageId());
         moduleViewHolder.moduleFeatures.setText(modules.get(i).getFeatures());
         moduleViewHolder.getCv().setOnClickListener(new View.OnClickListener() {
